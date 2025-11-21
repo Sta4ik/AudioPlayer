@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter.ttk import *
+from tkinter import filedialog
 # from pygame import mixer
 
 def pinApp():
@@ -17,7 +18,7 @@ def showListMusic(windowHeight, windowWidth):
     musicWidth = int(windowWidth * 0.4)
 
     if showedList:
-        listMusicWindow.geometry(f"{musicWidth}x{windowHeight}+{rootX - musicWidth - 5}+{rootY}")
+        listMusicWindow.geometry(f"{musicWidth}x{windowHeight}+{rootX - musicWidth - 5}+{rootY + 30}")
         listMusicWindow.deiconify()
     else:
         listMusicWindow.withdraw()
@@ -36,11 +37,17 @@ def showSettings(windowHeight, windowWidth):
     settingsHeight = int(windowHeight * 0.2)
 
     if showedSettings:
-        settingsWindow.geometry(f"{windowWidth}x{settingsHeight}+{rootX}+{rootY - settingsHeight - 35}")
+        settingsWindow.geometry(f"{windowWidth}x{settingsHeight}+{rootX + 10}+{rootY - settingsHeight - 5}")
         settingsWindow.deiconify()
     else:
         settingsWindow.withdraw()
 
+def addMusic():
+    global playlist
+
+    musicPath = filedialog.askopenfilename(title="Добавить музыку", filetypes=[("Audio files", ("*.mp3", "*.wav", "*.ogg"))])
+    playlist.append(musicPath)
+    
 
 if __name__ == "__main__":
     # mixer.init()
@@ -95,8 +102,9 @@ if __name__ == "__main__":
 
     listMusicWindow = Toplevel()
     listMusicWindow.resizable(True, False)
-    addMusicButton = Button(listMusicWindow, text="Add music")
+    addMusicButton = Button(listMusicWindow, text="Add music", command=addMusic)
     addMusicButton.pack(anchor=N, pady=10)
+    listMusicWindow.overrideredirect(True)
     listMusicWindow.withdraw()
 
 
@@ -104,8 +112,11 @@ if __name__ == "__main__":
     settingsWindow.resizable(False, True)
     transparencyRegul = Scale(settingsWindow, from_=0.3, to=1, value=1, orient=HORIZONTAL, command=updateTransparency)
     transparencyRegul.pack(pady=10)
+    settingsWindow.overrideredirect(True)
     settingsWindow.withdraw()
 
+
+    playlist = []
     showedSettings = False
     showedList = False
     pinned = False
