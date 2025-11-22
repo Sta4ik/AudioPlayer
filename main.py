@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter.ttk import *
 from tkinter import filedialog
-# from pygame import mixer
+from pygame import mixer
 
 def pinApp():
     global pinned
@@ -18,7 +18,7 @@ def showListMusic(windowHeight, windowWidth):
     musicWidth = int(windowWidth * 0.4)
 
     if showedList:
-        listMusicWindow.geometry(f"{musicWidth}x{windowHeight}+{rootX - musicWidth - 5}+{rootY + 30}")
+        listMusicWindow.geometry(f"{musicWidth}x{windowHeight}+{rootX - musicWidth - 5}+{rootY}")
         listMusicWindow.deiconify()
     else:
         listMusicWindow.withdraw()
@@ -37,20 +37,53 @@ def showSettings(windowHeight, windowWidth):
     settingsHeight = int(windowHeight * 0.2)
 
     if showedSettings:
-        settingsWindow.geometry(f"{windowWidth}x{settingsHeight}+{rootX + 10}+{rootY - settingsHeight - 5}")
+        settingsWindow.geometry(f"{windowWidth}x{settingsHeight}+{rootX}+{rootY - settingsHeight - 5}")
         settingsWindow.deiconify()
     else:
         settingsWindow.withdraw()
 
 def addMusic():
-    global playlist
+    global playlist, musicFrame
 
     musicPath = filedialog.askopenfilename(title="Добавить музыку", filetypes=[("Audio files", ("*.mp3", "*.wav", "*.ogg"))])
     playlist.append(musicPath)
-    
+
+    musicName = musicPath.split("/")[-1].split(".")[0]
+    label = Label(musicFrame, text=musicName, anchor=W)
+    label.pack(fill=X, padx=5, pady=2)
+
+def move(event, windowHeight, windowWidth):
+    rootX = root.winfo_x()
+    rootY = root.winfo_y()
+    x, y = root.winfo_pointerxy()
+
+    root.geometry(f"+{x}+{y}")
+
+    settingsHeight = int(windowHeight * 0.2)
+    settingsWindow.geometry(f"{windowWidth}x{settingsHeight}+{rootX}+{rootY - settingsHeight - 5}")
+
+    musicWidth = int(windowWidth * 0.4)
+    listMusicWindow.geometry(f"{musicWidth}x{windowHeight}+{rootX - musicWidth - 5}+{rootY}")
+
+def playMusic():
+    global currentTrack
+    mixer.music.load(playlist[currentTrack])
+    mixer.music.play()
+
+def nextMusic():
+    global currentTrack
+    currentTrack += 1
+    mixer.music.load(playlist[currentTrack])
+    mixer.music.play()
+
+def backMusic():
+    global currentTrack
+    currentTrack -= 1
+    mixer.music.load(playlist[currentTrack])
+    mixer.music.play()
 
 if __name__ == "__main__":
-    # mixer.init()
+    mixer.init()
 
     root = Tk()
     root.title("AudioPlayer")
@@ -62,6 +95,7 @@ if __name__ == "__main__":
     windowWidth = int(screenWidth * 0.4)
     windowHeight = int(windowWidth * 8 / 10)
     root.geometry(f"{windowWidth}x{windowHeight}")
+    root.overrideredirect(True)
     root.call('source', 'azure.tcl')
     root.call("set_theme", "dark")
     style = Style()
@@ -71,6 +105,11 @@ if __name__ == "__main__":
 
     settingButton = Button(upFrame, text="Settings", command=lambda: showSettings(windowHeight, windowWidth))
     settingButton.pack(side=RIGHT, padx=10, pady=10)
+
+    img = PhotoImage(file="default.png")
+    canvasImage = Canvas(width=200, height=200)
+    canvasImage.create_image(1, 1, anchor=NW, image=img)
+    canvasImage.pack(side=TOP)
 
     timeFrame = Frame(root)
     timeFrame.pack()
@@ -86,9 +125,9 @@ if __name__ == "__main__":
     buttonFrame = Frame(root)
     buttonFrame.pack(expand=True)
 
-    playButton = Button(buttonFrame, text="Play")
-    nextButton = Button(buttonFrame, text="Next")
-    backButton = Button(buttonFrame, text="Back")
+    playButton = Button(buttonFrame, text="Play", command=playMusic)
+    nextButton = Button(buttonFrame, text="Next", command=nextMusic)
+    backButton = Button(buttonFrame, text="Back", command=backMusic)
     pinButton = Button(buttonFrame, text="Pin", command=pinApp)
     listButton = Button(buttonFrame, text="List", command=lambda: showListMusic(windowHeight, windowWidth))
     listButton.pack(side=LEFT, padx=10)
@@ -104,6 +143,8 @@ if __name__ == "__main__":
     listMusicWindow.resizable(True, False)
     addMusicButton = Button(listMusicWindow, text="Add music", command=addMusic)
     addMusicButton.pack(anchor=N, pady=10)
+    musicFrame = Frame(listMusicWindow)
+    musicFrame.pack(fill=BOTH, expand=True)
     listMusicWindow.overrideredirect(True)
     listMusicWindow.withdraw()
 
@@ -120,4 +161,7 @@ if __name__ == "__main__":
     showedSettings = False
     showedList = False
     pinned = False
+    currentTrack = 0
+
+    root.bind("<B1-Motion>", lambda event: move(event, windowHeight, windowWidth))
     root.mainloop()
