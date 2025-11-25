@@ -3,6 +3,11 @@ from tkinter.ttk import *
 from tkinter import filedialog
 from pygame import mixer
 
+def formTime(seconds):
+    minute = int(seconds / 60)
+    seconds = int(seconds % 60)
+    return f"{minute}:{seconds:02d}"
+
 def pinApp():
     global pinned
     pinned = not pinned
@@ -46,11 +51,27 @@ def addMusic():
     global playlist, musicFrame
 
     musicPath = filedialog.askopenfilename(title="Добавить музыку", filetypes=[("Audio files", ("*.mp3", "*.wav", "*.ogg"))])
-    playlist.append(musicPath)
 
-    musicName = musicPath.split("/")[-1].split(".")[0]
-    label = Label(musicFrame, text=musicName, anchor=W)
-    label.pack(fill=X, padx=5, pady=2)
+    if musicPath not in playlist:
+        playlist.append(musicPath)
+
+        musicName = musicPath.split("/")[-1].split(".")[0]
+        indexTrack = len(playlist) - 1
+        label = Label(musicFrame, text=musicName, anchor=W)
+        label.pack(fill=X, padx=5, pady=2)
+
+        label.bind("<Button-1>", lambda e,indexTrack=indexTrack:playLabelTrack(indexTrack))
+
+def playLabelTrack(indexTrack):
+    global currentTrack, played
+    currentTrack = indexTrack
+
+    fullTime.config(text=formTime(mixer.Sound(playlist[currentTrack]).get_length()))
+
+    mixer.music.load(playlist[currentTrack])
+    mixer.music.play()
+    played = True
+    playButton.config(text="Pause")
 
 def move(event, windowHeight, windowWidth):
     rootX = root.winfo_x()
@@ -66,21 +87,38 @@ def move(event, windowHeight, windowWidth):
     listMusicWindow.geometry(f"{musicWidth}x{windowHeight}+{rootX - musicWidth - 5}+{rootY}")
 
 def playMusic():
-    global currentTrack
-    mixer.music.load(playlist[currentTrack])
-    mixer.music.play()
+    global currentTrack, played
+    if played == True:
+        mixer.music.load(playlist[currentTrack])
+        mixer.music.play()
+        playButton.config(text="Pause")
+    else:
+        mixer.music.pause()
+        playButton.config(text="Play")
+    played = not played
+    root.after(1000, updateTime)
 
 def nextMusic():
     global currentTrack
     currentTrack += 1
+    fullTime.config(text=formTime(mixer.Sound(playlist[currentTrack]).get_length()))
     mixer.music.load(playlist[currentTrack])
     mixer.music.play()
 
 def backMusic():
     global currentTrack
     currentTrack -= 1
+    fullTime.config(text=formTime(mixer.Sound(playlist[currentTrack]).get_length()))
     mixer.music.load(playlist[currentTrack])
     mixer.music.play()
+
+def updateTime():
+    global currentTrack
+    seconds = mixer.music.get_pos() / 1000
+    nowTime.config(text=formTime(seconds))
+    root.after(1000, updateTime)
+    
+
 
 if __name__ == "__main__":
     mixer.init()
@@ -158,6 +196,7 @@ if __name__ == "__main__":
 
 
     playlist = []
+    played = False
     showedSettings = False
     showedList = False
     pinned = False
