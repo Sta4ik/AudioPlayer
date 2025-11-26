@@ -67,11 +67,14 @@ def playLabelTrack(indexTrack):
     currentTrack = indexTrack
 
     fullTime.config(text=formTime(mixer.Sound(playlist[currentTrack]).get_length()))
-
+    musicName = playlist[currentTrack].split("/")[-1].split(".")[0]
+    trackName.config(text=musicName)
     mixer.music.load(playlist[currentTrack])
     mixer.music.play()
     played = True
     playButton.config(text="Pause")
+    timeRegul.config(to=mixer.Sound(playlist[currentTrack]).get_length())
+    root.after(1000, updateTime)
 
 def move(event, windowHeight, windowWidth):
     rootX = root.winfo_x()
@@ -88,9 +91,9 @@ def move(event, windowHeight, windowWidth):
 
 def playMusic():
     global currentTrack, played
-    if played == True:
+    if played == False:
         mixer.music.load(playlist[currentTrack])
-        mixer.music.play()
+        mixer.music.unpause()
         playButton.config(text="Pause")
     else:
         mixer.music.pause()
@@ -100,15 +103,21 @@ def playMusic():
 
 def nextMusic():
     global currentTrack
-    currentTrack += 1
+    currentTrack = (currentTrack + 1) % len(playlist)
     fullTime.config(text=formTime(mixer.Sound(playlist[currentTrack]).get_length()))
+    musicName = playlist[currentTrack].split("/")[-1].split(".")[0]
+    trackName.config(text=musicName)
+    timeRegul.config(to=mixer.Sound(playlist[currentTrack]).get_length())
     mixer.music.load(playlist[currentTrack])
     mixer.music.play()
 
 def backMusic():
     global currentTrack
-    currentTrack -= 1
+    currentTrack = (currentTrack - 1) % len(playlist)
     fullTime.config(text=formTime(mixer.Sound(playlist[currentTrack]).get_length()))
+    musicName = playlist[currentTrack].split("/")[-1].split(".")[0]
+    trackName.config(text=musicName)
+    timeRegul.config(to=mixer.Sound(playlist[currentTrack]).get_length())
     mixer.music.load(playlist[currentTrack])
     mixer.music.play()
 
@@ -116,6 +125,7 @@ def updateTime():
     global currentTrack
     seconds = mixer.music.get_pos() / 1000
     nowTime.config(text=formTime(seconds))
+    timeRegul.set(seconds)
     root.after(1000, updateTime)
     
 
@@ -149,15 +159,21 @@ if __name__ == "__main__":
     canvasImage.create_image(1, 1, anchor=NW, image=img)
     canvasImage.pack(side=TOP)
 
-    timeFrame = Frame(root)
-    timeFrame.pack()
 
-    nowTime = Label(timeFrame)
-    timeRegul = Scale(timeFrame, orient=HORIZONTAL)
-    fullTime = Label(timeFrame)
-    nowTime.pack()
-    timeRegul.pack()
-    fullTime.pack()
+    timeAndNameFrame = Frame(root)
+    timeAndNameFrame.pack(pady=10, fill=X)
+
+    trackName = Label(timeAndNameFrame, text="default")
+    trackName.pack(pady=5)
+    timeFrame = Frame(timeAndNameFrame)
+    timeFrame.pack(side=TOP, padx=5, pady=20)
+    nowTime = Label(timeFrame, text="00:00")
+    timeRegul = Scale(timeFrame, from_=0, to=1000, orient=HORIZONTAL, length=200)
+    fullTime = Label(timeFrame, text="00:00")
+    nowTime.pack(side=LEFT)
+    timeRegul.pack(side=LEFT, padx=5)
+    fullTime.pack(side=LEFT)
+
 
 
     buttonFrame = Frame(root)
